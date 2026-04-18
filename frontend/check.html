@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PZZ - Painel de Pedidos</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary: #e63946;
+        --primary-dark: #c1121f;
+        --bg: #f8f9fa;
+        --card-bg: #fff;
+        --text: #1d1d1d;
+        --text-light: #666;
+        --border: #e0e0e0;
+        --radius: 10px;
+      }
+
+      body {
+        font-family: "Segoe UI", system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+      }
+
+      /* LOGIN */
+      .login-page {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .login-card {
+        background: var(--card-bg);
+        border-radius: var(--radius);
+        padding: 40px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 380px;
+        text-align: center;
+      }
+
+      .login-card h1 {
+        font-size: 1.8rem;
+        margin-bottom: 8px;
+      }
+      .login-card p {
+        color: var(--text-light);
+        margin-bottom: 24px;
+        font-size: 0.9rem;
+      }
+
+      .login-card input {
+        width: 100%;
+        padding: 12px 14px;
+        border: 2px solid var(--border);
+        border-radius: 8px;
+        font-size: 1rem;
+        margin-bottom: 12px;
+        transition: border-color 0.2s;
+      }
+
+      .login-card input:focus {
+        outline: none;
+        border-color: var(--primary);
+      }
+
+      .login-error {
+        color: #ef4444;
+        font-size: 0.85rem;
+        margin-bottom: 12px;
+        display: none;
+      }
+
+      .btn {
+        width: 100%;
+        background: var(--primary);
+        color: #fff;
+        border: none;
+        padding: 14px;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .btn:hover {
+        background: var(--primary-dark);
+      }
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      /* DASHBOARD */
+      .dashboard {
+        display: none;
+      }
+
+      .dash-header {
+        background: var(--primary);
+        color: #fff;
+        padding: 14px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      .dash-header h1 {
+        font-size: 1.3rem;
+      }
+
+      .dash-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .btn-refresh {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: #fff;
+        padding: 8px 14px;
+        border-radius: 50px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 600;
+      }
+
+      .btn-refresh:hover {
+        background: rgba(255, 255, 255, 0.35);
+      }
+
+      .btn-logout {
+        background: none;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        color: #fff;
+        padding: 6px 14px;
+        border-radius: 50px;
+        cursor: pointer;
+        font-size: 0.85rem;
+      }
+
+      .btn-logout:hover {
+        background: rgba(255, 255, 255, 0.15);
+      }
+
+      /* FILTERS */
+      .filters {
+        max-width: 1200px;
+        margin: 16px auto;
+        padding: 0 20px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .filter-btn {
+        padding: 8px 16px;
+        border: 2px solid var(--border);
+        background: var(--card-bg);
+        border-radius: 50px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: all 0.2s;
+      }
+
+      .filter-btn.active {
+        border-color: var(--primary);
+        background: var(--primary);
+        color: #fff;
+      }
+
+      .filter-btn:hover:not(.active) {
+        border-color: var(--primary);
+      }
+
+      /* ORDERS LIST */
+      .orders {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 16px 20px;
+        display: grid;
+        gap: 16px;
+      }
+
+      .order-card {
+        background: var(--card-bg);
+        border-radius: var(--radius);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+        padding: 20px;
+        border-left: 4px solid var(--border);
+        transition: box-shadow 0.2s;
+      }
+
+      .order-card:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      }
+
+      .order-card[data-status="pendente"] {
+        border-left-color: #f59e0b;
+      }
+      .order-card[data-status="preparando"] {
+        border-left-color: #3b82f6;
+      }
+      .order-card[data-status="saiu_para_entrega"] {
+        border-left-color: #8b5cf6;
+      }
+      .order-card[data-status="entregue"] {
+        border-left-color: #10b981;
+      }
+      .order-card[data-status="cancelado"] {
+        border-left-color: #ef4444;
+      }
+
+      .order-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .order-id {
+        font-size: 1.1rem;
+        font-weight: 700;
+      }
+      .order-time {
+        font-size: 0.8rem;
+        color: var(--text-light);
+      }
+
+      .order-badge {
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #fff;
+      }
+
+      .order-customer {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px 20px;
+        font-size: 0.9rem;
+        margin-bottom: 12px;
+      }
+
+      .order-customer span {
+        color: var(--text-light);
+      }
+      .order-customer strong {
+        font-weight: 600;
+      }
+
+      .order-items {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 14px;
+      }
+
+      .order-item-tag {
+        background: var(--bg);
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        color: var(--text-light);
+      }
+
+      .order-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .order-total {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--primary);
+      }
+
+      .order-payment {
+        font-size: 0.85rem;
+        color: var(--text-light);
+      }
+
+      .status-select {
+        padding: 8px 12px;
+        border: 2px solid var(--border);
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        background: var(--card-bg);
+        transition: border-color 0.2s;
+      }
+
+      .status-select:focus {
+        outline: none;
+        border-color: var(--primary);
+      }
+
+      .orders-empty {
+        text-align: center;
+        color: var(--text-light);
+        padding: 60px 20px;
+        font-size: 1.1rem;
+      }
+
+      .order-count {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 8px 20px 0;
+        font-size: 0.85rem;
+        color: var(--text-light);
+      }
+
+      @media (max-width: 600px) {
+        .order-customer {
+          grid-template-columns: 1fr;
+        }
+        .dash-header {
+          padding: 12px 16px;
+        }
+        .dash-header h1 {
+          font-size: 1.1rem;
+        }
+        .orders {
+          padding: 12px 14px;
+        }
+        .filters {
+          padding: 0 14px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- LOGIN -->
+    <div class="login-page" id="loginPage">
+      <div class="login-card">
+        <h1>🍕 PZZ</h1>
+        <p>Painel de Gerenciamento</p>
+        <input
+          type="text"
+          id="loginUser"
+          placeholder="Usuário"
+          autocomplete="username"
+        />
+        <input
+          type="password"
+          id="loginPass"
+          placeholder="Senha"
+          autocomplete="current-password"
+        />
+        <p class="login-error" id="loginError"></p>
+        <button class="btn" id="loginBtn" onclick="login()">Entrar</button>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="dashboard" id="dashboard">
+      <header class="dash-header">
+        <h1>🍕 PZZ - Pedidos</h1>
+        <div class="dash-header-actions">
+          <button class="btn-refresh" onclick="loadOrders()">
+            🔄 Atualizar
+          </button>
+          <button class="btn-logout" onclick="logout()">Sair</button>
+        </div>
+      </header>
+
+      <div class="filters" id="filters">
+        <button
+          class="filter-btn active"
+          data-filter="todos"
+          onclick="setFilter(this)"
+        >
+          Todos
+        </button>
+        <button
+          class="filter-btn"
+          data-filter="pendente"
+          onclick="setFilter(this)"
+        >
+          🕐 Pendente
+        </button>
+        <button
+          class="filter-btn"
+          data-filter="preparando"
+          onclick="setFilter(this)"
+        >
+          👨‍🍳 Preparando
+        </button>
+        <button
+          class="filter-btn"
+          data-filter="saiu_para_entrega"
+          onclick="setFilter(this)"
+        >
+          🛵 Saiu
+        </button>
+        <button
+          class="filter-btn"
+          data-filter="entregue"
+          onclick="setFilter(this)"
+        >
+          ✅ Entregue
+        </button>
+        <button
+          class="filter-btn"
+          data-filter="cancelado"
+          onclick="setFilter(this)"
+        >
+          ❌ Cancelado
+        </button>
+      </div>
+      <hr>
+      <button class="btn-padrao" onclick="criarProduto()">Salvar Produto</button>
+      <div class="form-produto">
+
+<h2>📦 Adicionar Produto</h2>
+
+<div class="form-produto">
+  <input id="nome" placeholder="Nome do produto">
+  <input id="preco" placeholder="Preço">
+  <input id="descricao" placeholder="Descrição">
+  <input id="imagem" placeholder="URL da imagem">
+  
+<select id="categoria">
+  <option value="">Categoria</option>
+  <option value="pizzas">Pizzas</option>
+  <option value="pasteis">Pastéis</option>
+  <option value="acompanhamentos">Acompanhamentos</option>
+  <option value="bebidas">Bebidas</option>
+</select>
+
+  <button class="btn-padrao" onclick="criarProduto()">Salvar Produto</button>
+</div>
+
+<hr>
+
+<h3>Lista de Produtos</h3>
+<div id="lista-produtos"></div>
+
+      <p class="order-count" id="orderCount"></p>
+      <div class="orders" id="ordersList"></div>
+    </div>
+
+    <script>
+      const API = "https://pzz-bn4k.onrender.com/api";
+      let adminToken = localStorage.getItem("pzz_admin_token") || "";
+      let allOrders = [];
+      let currentFilter = "todos";
+
+      const STATUS_MAP = {
+        pendente: { label: "Pendente", color: "#f59e0b", icon: "🕐" },
+        preparando: { label: "Preparando", color: "#3b82f6", icon: "👨‍🍳" },
+        saiu_para_entrega: {
+          label: "Saiu p/ entrega",
+          color: "#8b5cf6",
+          icon: "🛵",
+        },
+        entregue: { label: "Entregue", color: "#10b981", icon: "✅" },
+        cancelado: { label: "Cancelado", color: "#ef4444", icon: "❌" },
+      };
+
+      const PAGAMENTO_MAP = {
+        pix: "💠 PIX",
+        dinheiro: "💵 Dinheiro",
+        cartao_credito: "💳 Crédito",
+        cartao_debito: "💳 Débito",
+      };
+
+      // === AUTH ===
+      async function login() {
+        const usuario = document.getElementById("loginUser").value.trim();
+        const senha = document.getElementById("loginPass").value;
+        const errEl = document.getElementById("loginError");
+        const btn = document.getElementById("loginBtn");
+
+        if (!usuario || !senha) {
+          errEl.textContent = "Preencha usuário e senha";
+          errEl.style.display = "block";
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = "Entrando...";
+        errEl.style.display = "none";
+
+        try {
+          const res = await fetch(`${API}/admin/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ usuario, senha }),
+          });
+          const data = await res.json();
+
+          if (!res.ok) {
+            errEl.textContent = data.erro || "Erro ao entrar";
+            errEl.style.display = "block";
+            return;
+          }
+
+          adminToken = data.token;
+          localStorage.setItem("pzz_admin_token", adminToken);
+          showDashboard();
+        } catch {
+          errEl.textContent = "Erro de conexão com o servidor";
+          errEl.style.display = "block";
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "Entrar";
+        }
+      }
+
+      function logout() {
+        adminToken = "";
+        localStorage.removeItem("pzz_admin_token");
+        document.getElementById("dashboard").style.display = "none";
+        document.getElementById("loginPage").style.display = "flex";
+      }
+
+      function showDashboard() {
+        document.getElementById("loginPage").style.display = "none";
+        document.getElementById("dashboard").style.display = "block";
+        loadOrders();
+      }
+
+      // Enter to login
+      document.getElementById("loginPass").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") login();
+      });
+
+      // === ORDERS ===
+      async function loadOrders() {
+        try {
+          const res = await fetch(`${API}/admin/pedidos`, {
+            headers: { Authorization: `Bearer ${adminToken}` },
+          });
+
+          if (res.status === 401) {
+            logout();
+            return;
+          }
+
+          allOrders = await res.json();
+          renderOrders();
+        } catch {
+          document.getElementById("ordersList").innerHTML =
+            '<p class="orders-empty">Erro ao carregar pedidos</p>';
+        }
+      }
+
+      function renderOrders() {
+        const container = document.getElementById("ordersList");
+        const filtered =
+          currentFilter === "todos"
+            ? allOrders
+            : allOrders.filter((o) => o.status === currentFilter);
+
+        document.getElementById("orderCount").textContent =
+          `${filtered.length} pedido${filtered.length !== 1 ? "s" : ""}` +
+          (currentFilter !== "todos"
+            ? ` (${STATUS_MAP[currentFilter]?.label || currentFilter})`
+            : "");
+
+        if (filtered.length === 0) {
+          container.innerHTML =
+            '<p class="orders-empty">Nenhum pedido encontrado</p>';
+          return;
+        }
+
+        container.innerHTML = filtered
+          .map((p) => {
+            const st = STATUS_MAP[p.status] || STATUS_MAP.pendente;
+            const date = new Date(p.criado_em + "Z").toLocaleString("pt-BR");
+            const pagLabel = PAGAMENTO_MAP[p.pagamento] || p.pagamento;
+            const trocoInfo = p.troco ? ` (troco p/ R$ ${p.troco})` : "";
+
+            return `
+      <div class="order-card" data-status="${p.status}">
+        <div class="order-top">
+          <div>
+            <span class="order-id">Pedido #${p.id}</span>
+            <span class="order-time">${date}</span>
+          </div>
+          <span class="order-badge" style="background:${st.color}">${st.icon} ${st.label}</span>
+        </div>
+
+        <div class="order-customer">
+          <div><span>Cliente:</span> <strong>${esc(p.nome)}</strong></div>
+          <div><span>Tel:</span> <strong>${esc(p.telefone)}</strong></div>
+          <div><span>Endereço:</span> <strong>${esc(p.endereco)}</strong></div>
+          <div><span>Pagamento:</span> <strong>${pagLabel}${trocoInfo}</strong></div>
+        </div>
+
+        <div class="order-items">
+          ${p.itens.map((i) => `<span class="order-item-tag">${i.quantidade}x ${esc(i.nome)}</span>`).join("")}
+        </div>
+
+        <div class="order-footer">
+          <span class="order-total">R$ ${p.total.toFixed(2).replace(".", ",")}</span>
+          <select class="status-select" onchange="changeStatus(${p.id}, this.value)">
+            ${Object.entries(STATUS_MAP)
+              .map(
+                ([k, v]) =>
+                  `<option value="${k}" ${k === p.status ? "selected" : ""}>${v.icon} ${v.label}</option>`,
+              )
+              .join("")}
+          </select>
+        </div>
+      </div>`;
+          })
+          .join("");
+      }
+
+      async function changeStatus(pedidoId, novoStatus) {
+        try {
+          const res = await fetch(`${API}/admin/pedidos/${pedidoId}/status`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${adminToken}`,
+            },
+            body: JSON.stringify({ status: novoStatus }),
+          });
+
+          if (res.status === 401) {
+            logout();
+            return;
+          }
+
+          if (res.ok) {
+            const order = allOrders.find((o) => o.id === pedidoId);
+            if (order) order.status = novoStatus;
+
+            sendOrderToWhatsApp(order);
+            renderOrders();
+          }
+        } catch {
+          alert("Erro ao atualizar status");
+        }
+      }
+
+      function sendOrderToWhatsApp(order) {
+        const message = `Pedido #${order.id} está com o status "${STATUS_MAP[order.status]?.label || order.status}".`;
+        const encodedMessage = encodeURIComponent(message);
+        const clientNumber = `55${order.telefone.replace(/\D/g, "")}`; // Remove tudo que não for número
+        const whatsappLink = `https://wa.me/${clientNumber}?text=${encodedMessage}`;
+
+        // Abrir WhatsApp em nova aba/janela
+        window.open(whatsappLink, "_blank");
+      }
+
+      function setFilter(btn) {
+        document
+          .querySelectorAll(".filter-btn")
+          .forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentFilter = btn.dataset.filter;
+        renderOrders();
+      }
+
+      function esc(str) {
+        const d = document.createElement("div");
+        d.textContent = str;
+        return d.innerHTML;
+      }
+
+      // Auto-refresh every 30s
+      setInterval(() => {
+        if (adminToken) loadOrders();
+      }, 30000);
+
+      // === INIT ===
+      if (adminToken) {
+        showDashboard();
+      }
+    </script>
+  </body>
+</html>
